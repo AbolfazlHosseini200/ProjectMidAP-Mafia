@@ -1,20 +1,23 @@
 import java.io.IOException;
+import java.lang.ref.SoftReference;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Random;
 
 public class Server {
-    static ArrayList<Thread> clients=new ArrayList<Thread>();
-    static ArrayList<Thread> mafias=new ArrayList<Thread>();
-    static ArrayList<Thread> citizens=new ArrayList<Thread>();
+    static ArrayList<ClientManager> clients=new ArrayList<ClientManager>();
+    static ArrayList<ClientManager> mafias=new ArrayList<ClientManager>();
+    static ArrayList<ClientManager> citizens=new ArrayList<ClientManager>();
     static ArrayList<String> characters=new ArrayList<String>();
-    static HashMap<Thread,String> names=new HashMap<Thread,String>();
-    static HashMap<Thread,Integer> life=new HashMap<Thread,Integer>();
-    static HashMap<Thread,String> clientCharacters=new HashMap<Thread,String>();
+    static HashMap<ClientManager,String> names=new HashMap<ClientManager,String>();
+    static HashMap<ClientManager,Integer> life=new HashMap<ClientManager,Integer>();
+    static HashMap<ClientManager,String> clientCharacters=new HashMap<ClientManager,String>();
+    static String phase="Day";
     static int ready=0,playersNumber=10;
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
     ServerSocket server=new ServerSocket(8585);
     Socket client;
     Server.makeCharacter();
@@ -28,10 +31,31 @@ public class Server {
         Server.setThreadName(clients.get(clients.size()-1),"player"+clients.size());
         clients.get(clients.size()-1).start();
     }
-
+	while (ready!=10)
+    {
+        System.out.print("");
+    }
      while (Server.canContinuePlaying())
      {
+         int sec=0;
+         while (sec!=60)
+       {
+           sec++;
+           Thread.sleep(1000);
+           if(sec%10==0 && sec!=60)
+               clients.get(0).sendToAll("God",(60-sec)+" Second Remaining");
+       }
+         clients.get(0).sendToAll("God","EveryOne Say His/Her Last Conversation");
+         phase="Vote";
+         while (phase.equalsIgnoreCase("Vote"))
+         {
 
+
+         }
+         while (phase.equalsIgnoreCase("Night"))
+         {
+
+         }
      }
     }
     public static boolean checkName(String name)
@@ -49,7 +73,7 @@ public class Server {
 
      return false;
     }
-    public static void setThreadName(Thread thread,String name)
+    public static void setThreadName(ClientManager thread,String name)
     {
         names.put(thread,name);
     }
@@ -57,13 +81,20 @@ public class Server {
     {
         int deadMafias=0,deadCitizens=0;
         for (int i=0;i<mafias.size();i++)
+        {
             if(life.get(mafias.get(i))==0)
                 deadMafias++;
+        }
         for (int i=0;i<citizens.size();i++)
+        {
             if(life.get(citizens.get(0))==0)
                 deadCitizens++;
+        }
+        System.out.println(deadCitizens+" "+deadMafias+" "+mafias.size()+" "+citizens.size());
         if((deadMafias==mafias.size())||(mafias.size()-deadMafias==citizens.size()-deadCitizens))
+        {
             return false;
+        }
         return true;
 
     }
@@ -80,7 +111,7 @@ public class Server {
         characters.add("Mayor");
         characters.add("DieHard");
     }
-    public static String giveCharacter(Thread thread)
+    public static String giveCharacter(ClientManager thread)
     {
         Random random=new Random();
         int n=random.nextInt(characters.size());

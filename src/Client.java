@@ -2,10 +2,12 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Date;
 import java.util.Scanner;
 public class Client {
     static String name;
     static String character;
+    static String phase="Day";
     public static void main(String[] args) throws IOException {
         Socket client=new Socket("localhost",8585);
         DataInputStream dataInputStream=new DataInputStream(client.getInputStream());
@@ -34,6 +36,29 @@ public class Client {
         System.out.println("Waiting For Other Players...");
         character=dataInputStream.readUTF();
         System.out.println("Your Character Is "+character);
-        scanner.next();
+        Thread chat=new Chats(dataInputStream);
+
+        while (true)
+        {
+            System.out.println("Its Day Now And You Can Chat As "+name);
+            chat.start();
+            Date startDate = new Date();
+            Date endDate = new Date();
+            while ((int)((endDate.getTime() - startDate.getTime()) / 1000)!=60)
+            {
+             dataOutputStream.writeUTF(scanner.nextLine());
+                endDate = new Date();
+            }
+            chat.interrupt();
+            phase="Vote";
+            while (phase.equalsIgnoreCase("Vote"))
+            {
+
+            }
+            while (phase.equalsIgnoreCase("Night"))
+            {
+
+            }
+        }
     }
 }
