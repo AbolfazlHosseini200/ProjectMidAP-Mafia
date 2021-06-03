@@ -51,12 +51,13 @@ public class ClientManager extends Thread{
             {
                 Date startDate = new Date();
                 Date endDate = new Date();
-                while ((int)((endDate.getTime() - startDate.getTime()) / 1000)!=60)
+                while ((int)((endDate.getTime() - startDate.getTime()) / 1000)<60)
                 {
                  msg=dataInputStream.readUTF();
                  sendToAll(this.name,msg);
                  endDate=new Date();
                 }
+                Server.phase="Vote";
                 while (Server.phase.equalsIgnoreCase("Vote"))
                 {
 

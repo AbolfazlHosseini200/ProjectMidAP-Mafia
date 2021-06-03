@@ -44,12 +44,12 @@ public class Client {
             chat.start();
             Date startDate = new Date();
             Date endDate = new Date();
-            while ((int)((endDate.getTime() - startDate.getTime()) / 1000)!=60)
+            while (((int)((endDate.getTime() - startDate.getTime()) / 1000))<60)
             {
              dataOutputStream.writeUTF(scanner.nextLine());
                 endDate = new Date();
             }
-            chat.interrupt();
+           // chat.stop();
             phase="Vote";
             while (phase.equalsIgnoreCase("Vote"))
             {
