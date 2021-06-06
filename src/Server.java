@@ -1,45 +1,48 @@
-import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.lang.ref.SoftReference;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.Random;
 
 public class Server {
-    static ArrayList<ClientManager> clients = new ArrayList<ClientManager>();
-    static ArrayList<ClientManager> mafias = new ArrayList<ClientManager>();
-    static ArrayList<ClientManager> citizens = new ArrayList<ClientManager>();
-    static ArrayList<String> characters = new ArrayList<String>();
-    static HashMap<ClientManager, String> names = new HashMap<ClientManager, String>();
-    static HashMap<ClientManager, Integer> life = new HashMap<ClientManager, Integer>();
-    static HashMap<ClientManager, String> clientCharacters = new HashMap<ClientManager, String>();
-    static HashMap<ClientManager, Integer> votes = new HashMap<ClientManager, Integer>();
-    static String phase = "Day";
-    static int ready = 0, playersNumber = 10;
+    private static ArrayList<ClientManager> clients = new ArrayList<ClientManager>();
+    private static ArrayList<ClientManager> mafias = new ArrayList<ClientManager>();
+    private static ArrayList<ClientManager> citizens = new ArrayList<ClientManager>();
+    private static ArrayList<String> characters = new ArrayList<String>();
+    private static ArrayList<String> votesReport = new ArrayList<String>();
+    private static HashMap<ClientManager, String> names = new HashMap<ClientManager, String>();
+    private static HashMap<ClientManager, Integer> life = new HashMap<ClientManager, Integer>();
+    private static HashMap<ClientManager, String> clientCharacters = new HashMap<ClientManager, String>();
+    private static HashMap<ClientManager, Integer> votes = new HashMap<ClientManager, Integer>();
+    private static String phase = "Day";
+    private static int ready = 0, playersNumber = 10, clientsVoted = 0;
 
     public static void main(String[] args) throws IOException, InterruptedException {
         ServerSocket server = new ServerSocket(8585);
         Socket client;
-        Server.makeCharacter();
+        GamingSystem.makeCharacter();
         System.out.println("Server iS On\nWaiting For Clients...");
 
         for (int i = 0; i < playersNumber; i++) {
             client = server.accept();
             System.out.println("Client Number " + (clients.size() + 1) + " Detected!!!");
             clients.add(new ClientManager(client));
-            Server.setThreadName(clients.get(clients.size() - 1), "player" + clients.size());
+            GamingSystem.setThreadName(clients.get(clients.size() - 1), "player" + clients.size());
             clients.get(clients.size() - 1).start();
         }
-        while (ready != 10) {
+        while (ready!=playersNumber) {
             System.out.print("");
         }
+        ready=0;
         for (ClientManager clientManager : clients) {
-            votes.put(clientManager,0);
+            votes.put(clientManager, 0);
         }
-        while (Server.canContinuePlaying()) {
+        for (int i=0;i<clients.size();i++)
+        {
+            if(mafias.contains(clients.get(i)))
+                clients.get(i).sendForThisClient(names.get(mafias.get(0))+" is "+clientCharacters.get(mafias.get(0))+".\n"+names.get(mafias.get(1))+" is "+clientCharacters.get(mafias.get(1))+".\n"+names.get(mafias.get(2))+" is "+clientCharacters.get(mafias.get(2))+".");
+        }
+        while (GamingSystem.canContinuePlaying()) {
             int sec = 0;
             while (sec != 60) {
                 sec++;
@@ -49,10 +52,27 @@ public class Server {
             }
             clients.get(0).sendToAll("God", "EveryOne Say His/Her Last Conversation");
             phase = "Vote";
-            while (phase.equalsIgnoreCase("Vote")) {
+            while (GamingSystem.startGame()) {
+                System.out.print("");
+            }
+            if (phase.equalsIgnoreCase("Vote")) {
                 clients.get(0).sendToAll("God", "If You Said Your Last Conversation For Today , You Can Vote Now");
-                for (int i = 0; i < clients.size(); i++)
-                    clients.get(0).sendToAll(String.valueOf(i + 1), names.get(clients.get(i)));
+                clientsVoted = 0;
+                for (int i = 0; i < clients.size(); i++) {
+                    if (life.get(clients.get(i)) != 0)
+                        clients.get(0).sendToAll(names.get(clients.get(i)));
+                }
+                ready=0;
+                while (!GamingSystem.everyOneVoted()) {
+                    System.out.print("");
+                }
+                for (String msg : votesReport) {
+                    clients.get(0).sendToAll(msg);
+                }
+                GamingSystem.checkWhoseOut();
+                for (ClientManager clientManager : clients) {
+                    votes.put(clientManager, 0);
+                }
             }
             while (phase.equalsIgnoreCase("Night")) {
 
@@ -60,101 +80,66 @@ public class Server {
         }
     }
 
-    public static boolean checkName(String name) {
-        for (int i = 0, j = 0; i < clients.size(); i++) {
-
-            //System.out.println((i+1)+")"+names.get(clients.get(i)));
-            if (names.get(clients.get(i)).equals(name))
-                if (j == 1)
-                    return true;
-                else
-                    j++;
-        }
-
-        return false;
+    public static int getClientsVoted() {
+        return clientsVoted;
     }
 
-    public static void setThreadName(ClientManager thread, String name) {
-        names.put(thread, name);
+    public static int getPlayersNumber() {
+        return playersNumber;
     }
 
-    public static boolean canContinuePlaying() {
-        int deadMafias = 0, deadCitizens = 0;
-        for (int i = 0; i < mafias.size(); i++) {
-            if (life.get(mafias.get(i)) == 0)
-                deadMafias++;
-        }
-        for (int i = 0; i < citizens.size(); i++) {
-            if (life.get(citizens.get(0)) == 0)
-                deadCitizens++;
-        }
-        if ((deadMafias == mafias.size()) || (mafias.size() - deadMafias == citizens.size() - deadCitizens)) {
-            return false;
-        }
-        return true;
-
+    public static int getReady() {
+        return ready;
     }
 
-    public static void makeCharacter() {
-        characters.add("Dr.Lecter");
-        characters.add("Mafia");
-        characters.add("GodFather");
-        characters.add("Citizen");
-        characters.add("Doctor");
-        characters.add("Sniper");
-        characters.add("Detector");
-        characters.add("Psychologist");
-        characters.add("Mayor");
-        characters.add("DieHard");
+    public static String getPhase() {
+        return phase;
     }
 
-    public static String giveCharacter(ClientManager thread) {
-        Random random = new Random();
-        int n = random.nextInt(characters.size());
-        String chara = characters.get(n);
-        characters.remove(n);
-        if (chara.equals("Dr.Lecter") || chara.equals("Mafia") || chara.equals("GodFather"))
-            mafias.add(thread);
-        else
-            citizens.add(thread);
-        if (chara.equals("DieHard"))
-            life.put(thread, 2);
-        else
-            life.put(thread, 1);
-        clientCharacters.put(thread, chara);
-        System.out.println(names.get(thread) + ":" + chara);
-        return chara;
+    public static HashMap<ClientManager, Integer> getVotes() {
+        return votes;
     }
 
-    public static void ready() {
-        ready++;
+    public static HashMap<ClientManager, String> getClientCharacters() {
+        return clientCharacters;
     }
 
-    public static boolean startGame() {
-        if (ready == playersNumber)
-            return false;
-        else
-            return true;
+    public static HashMap<ClientManager, Integer> getLife() {
+        return life;
     }
 
-//    public static boolean everyOneVoted() {
-//        int deadMafias = 0, deadCitizens = 0;
-//        for (int i = 0; i < mafias.size(); i++) {
-//            if (life.get(mafias.get(i)) == 0)
-//                deadMafias++;
-//        }
-//        for (int i = 0; i < citizens.size(); i++) {
-//            if (life.get(citizens.get(0)) == 0)
-//                deadCitizens++;
-//        }
-//        int alive = playersNumber - deadCitizens - deadMafias;
-//        if (alive == votes)
-//            return true;
-//        else
-//            return false;
-//    }
+    public static HashMap<ClientManager, String> getNames() {
+        return names;
+    }
 
-    public static void vote(ClientManager client) {
+    public static ArrayList<String> getVotesReport() {
+        return votesReport;
+    }
 
+    public static ArrayList<String> getCharacters() {
+        return characters;
+    }
+
+    public static ArrayList<ClientManager> getCitizens() {
+        return citizens;
+    }
+
+    public static ArrayList<ClientManager> getMafias() {
+        return mafias;
+    }
+
+    public static ArrayList<ClientManager> getClients() {
+        return clients;
+    }
+    public static void setPhase(String phase) {
+        Server.phase = phase;
+    }
+
+    public static void setReady(int ready) {
+        Server.ready = ready;
+    }
+
+    public static void setClientsVoted(int clientsVoted) {
+        Server.clientsVoted = clientsVoted;
     }
 }
