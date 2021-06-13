@@ -45,6 +45,7 @@ public class Client {
 
             Date startDate = new Date();
             Date endDate = new Date();
+            dataOutputStream.flush();
             while (((int)((endDate.getTime() - startDate.getTime()) / 1000))<60)
             {
              dataOutputStream.writeUTF(scanner.nextLine());

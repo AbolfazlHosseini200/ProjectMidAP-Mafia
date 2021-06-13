@@ -57,6 +57,7 @@ public class ClientManager extends Thread{
 
                 Date startDate = new Date();
                 Date endDate = new Date();
+
                 while ((int)((endDate.getTime() - startDate.getTime()) / 1000)<60)
                 {
                  msg=dataInputStream.readUTF();
@@ -97,9 +98,18 @@ public class ClientManager extends Thread{
                 while (!Server.everyOneVoted()) {
                     System.out.print("");
                 }
-                while (Server.getPhase().equalsIgnoreCase("Night"))
+                Server.setPhase("Night");
+                if (Server.getPhase().equalsIgnoreCase("Night"))
                 {
-
+                   if(character.equalsIgnoreCase("GodFather")||character.equalsIgnoreCase("Mafia")||character.equalsIgnoreCase("Dr.Lecter"))
+                   {
+                       while ((int)((endDate.getTime() - startDate.getTime()) / 1000)<30)
+                       {
+                           msg=dataInputStream.readUTF();
+                           endDate=new Date();
+                           sendToAll(this.name,msg);
+                       }
+                   }
                 }
             }
         } catch (IOException e) {

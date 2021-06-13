@@ -14,10 +14,23 @@ public class Server {
     private static ArrayList<ClientManager> citizens = new ArrayList<ClientManager>();
     private static ArrayList<String> characters = new ArrayList<String>();
     private static ArrayList<String> votesReport = new ArrayList<String>();
+    private static ArrayList<Roles> rolesList=new ArrayList<Roles>();
     private static HashMap<ClientManager, String> names = new HashMap<ClientManager, String>();
     private static HashMap<ClientManager, Integer> life = new HashMap<ClientManager, Integer>();
     private static HashMap<ClientManager, String> clientCharacters = new HashMap<ClientManager, String>();
     private static HashMap<ClientManager, Integer> votes = new HashMap<ClientManager, Integer>();
+    private static ClientManager silentMan=null;
+    private static ClientManager safeMafia=null;
+
+    public static void setSafeMafia(ClientManager safeMafia) {
+        Server.safeMafia = safeMafia;
+    }
+
+    public static void setSafeCitizen(ClientManager safeCitizen) {
+        Server.safeCitizen = safeCitizen;
+    }
+
+    private static ClientManager safeCitizen=null;
     private static String phase = "Day";
     private static int ready = 0, playersNumber = 10, clientsVoted = 0;
 
@@ -89,14 +102,18 @@ public class Server {
                 for (String msg : votesReport) {
                     clients.get(0).sendToAll(msg);
                 }
+                votesReport.clear();
                 checkWhoseOut();
                 for (ClientManager clientManager : clients) {
                     votes.put(clientManager, 0);
                 }
             }
             setPhase("Night");
-            while (phase.equalsIgnoreCase("Night")) {
-
+            if (phase.equalsIgnoreCase("Night")) {
+                for(int i=0;i<rolesList.size();i++)
+                {
+                    if((rolesList.get(i) instanceof GodFather))
+                }
             }
         }
     }
@@ -156,6 +173,26 @@ public class Server {
         int n = random.nextInt(characters.size());
         String chara = characters.get(n);
         characters.remove(n);
+        if(chara.equalsIgnoreCase("Doctor"))
+            rolesList.add(new Doctor(chara,thread));
+        if(chara.equalsIgnoreCase("Dr.Lecter"))
+            rolesList.add(new DrLecter(chara,thread));
+        if(chara.equalsIgnoreCase("DieHard"))
+            rolesList.add(new DieHard(chara,thread));
+        if(chara.equalsIgnoreCase("Sniper"))
+            rolesList.add(new Sniper(chara,thread));
+        if(chara.equalsIgnoreCase("Citizen"))
+            rolesList.add(new SimpleCitizen(chara,thread));
+        if(chara.equalsIgnoreCase("Mafia"))
+            rolesList.add(new SimpleMafia(chara,thread));
+        if(chara.equalsIgnoreCase("GodFather"))
+            rolesList.add(new GodFather(chara,thread));
+        if(chara.equalsIgnoreCase("Detector"))
+            rolesList.add(new Detector(chara,thread));
+        if(chara.equalsIgnoreCase("Mayor"))
+            rolesList.add(new Mayor(chara,thread));
+        if(chara.equalsIgnoreCase("Psychologist"))
+            rolesList.add(new Psychologist(chara,thread));
         if (chara.equals("Dr.Lecter") || chara.equals("Mafia") || chara.equals("GodFather"))
             mafias.add(thread);
         else
@@ -256,6 +293,18 @@ public class Server {
             if(names.get(clients.get(i)).equalsIgnoreCase(vote) && life.get(clients.get(i))!=0)
                 return true;
         return false;
+    }
+    public static void kill(ClientManager client)
+    {
+        life.put(client,0);
+    }
+    public static String playerCharacter(ClientManager player)
+    {
+        return clientCharacters.get(player);
+    }
+    public static void setSilentMan(ClientManager SilentMan)
+    {
+        silentMan=SilentMan;
     }
     public static int getClientsVoted() {
         return clientsVoted;
