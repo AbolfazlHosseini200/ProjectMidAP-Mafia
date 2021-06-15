@@ -1,10 +1,10 @@
 public class DrLecter extends Mafia{
-    public DrLecter(String character,ClientManager player)
+    public DrLecter(String character,ClientManager player,String name)
     {
-        super(character,player);
+        super(character,player,name);
     }
     @Override
     public void action(ClientManager player) {
-      Server.setSafeMafia(player);
+      Server.setLectersHeal(player);
     }
 }

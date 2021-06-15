@@ -1,10 +1,12 @@
 public class Roles {
     ClientManager player;
     String character;
-    public Roles(String character,ClientManager player)
+    String name;
+    public Roles(String character,ClientManager player,String name)
     {
      this.player=player;
      this.character=character;
+     this.name=name;
     }
 
 }

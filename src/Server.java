@@ -12,39 +12,42 @@ public class Server {
     private static ArrayList<ClientManager> clients = new ArrayList<ClientManager>();
     private static ArrayList<ClientManager> mafias = new ArrayList<ClientManager>();
     private static ArrayList<ClientManager> citizens = new ArrayList<ClientManager>();
+    private static ArrayList<ClientManager> nightDeaths = new ArrayList<ClientManager>();
     private static ArrayList<String> characters = new ArrayList<String>();
     private static ArrayList<String> votesReport = new ArrayList<String>();
-    private static ArrayList<Roles> rolesList=new ArrayList<Roles>();
+    private static ArrayList<Roles> rolesList = new ArrayList<Roles>();
     private static HashMap<ClientManager, String> names = new HashMap<ClientManager, String>();
     private static HashMap<ClientManager, Integer> life = new HashMap<ClientManager, Integer>();
     private static HashMap<ClientManager, String> clientCharacters = new HashMap<ClientManager, String>();
     private static HashMap<ClientManager, Integer> votes = new HashMap<ClientManager, Integer>();
-    private static ClientManager silentMan=null;
-    private static ClientManager safeMafia=null;
+    private static ClientManager silentMan = null;
+    private static ClientManager mafiasShot = null;
+    private static ClientManager doctorsHeal = null;
+    private static ClientManager snipersShot = null;
+    private static ClientManager lectersHeal = null;
+    private static boolean tellStatistics = false;
+    private static String statistics;
 
-    public static void setSafeMafia(ClientManager safeMafia) {
-        Server.safeMafia = safeMafia;
-    }
 
     public static void setSafeCitizen(ClientManager safeCitizen) {
         Server.safeCitizen = safeCitizen;
     }
 
-    private static ClientManager safeCitizen=null;
+    private static ClientManager safeCitizen = null;
     private static String phase = "Day";
     private static int ready = 0, playersNumber = 10, clientsVoted = 0;
 
     public static void main(String[] args) throws IOException, InterruptedException {
         ServerSocket server = new ServerSocket(8585);
-        Socket client,clientReader;
+        Socket client, clientReader;
         Server.makeCharacter();
         System.out.println("Server iS On\nWaiting For Clients...");
 
         for (int i = 0; i < playersNumber; i++) {
             client = server.accept();
-            clientReader=server.accept();
+            clientReader = server.accept();
             System.out.println("Client Number " + (clients.size() + 1) + " Detected!!!");
-            clients.add(new ClientManager(client,clientReader,clients));
+            clients.add(new ClientManager(client, clientReader, clients));
             Server.setThreadName(clients.get(clients.size() - 1), "player" + clients.size());
             clients.get(clients.size() - 1).start();
         }
@@ -54,18 +57,19 @@ public class Server {
         for (ClientManager clientManager : clients) {
             votes.put(clientManager, 0);
         }
-        for (int i=0;i<mafias.size();i++)
-            mafias.get(i).sendForThisClient(names.get(mafias.get(0))+" Is "+clientCharacters.get(mafias.get(0))+"\n"+names.get(mafias.get(2))+" Is "+clientCharacters.get(mafias.get(2))+"\n"+names.get(mafias.get(1))+" Is "+clientCharacters.get(mafias.get(1)));
-        for(int i=0;i<clients.size();i++)
-            if(clientCharacters.get(clients.get(i)).equalsIgnoreCase("Mayor"))
-                for(int j=0;j<clients.size();j++)
-                    if(clientCharacters.get(clients.get(j)).equalsIgnoreCase("Doctor"))
-                    {
-                        clients.get(i).sendForThisClient(names.get(clients.get(j))+" Is Doctor");
-                        clients.get(j).sendForThisClient(names.get(clients.get(i))+" Is Mayor");
+        for (int i = 0; i < mafias.size(); i++)
+            mafias.get(i).sendForThisClient(names.get(mafias.get(0)) + " Is " + clientCharacters.get(mafias.get(0)) + "\n" + names.get(mafias.get(2)) + " Is " + clientCharacters.get(mafias.get(2)) + "\n" + names.get(mafias.get(1)) + " Is " + clientCharacters.get(mafias.get(1)));
+        for (int i = 0; i < clients.size(); i++)
+            if (clientCharacters.get(clients.get(i)).equalsIgnoreCase("Mayor"))
+                for (int j = 0; j < clients.size(); j++)
+                    if (clientCharacters.get(clients.get(j)).equalsIgnoreCase("Doctor")) {
+                        clients.get(i).sendForThisClient(names.get(clients.get(j)) + " Is Doctor");
+                        clients.get(j).sendForThisClient(names.get(clients.get(i)) + " Is Mayor");
                     }
         while (Server.canContinuePlaying()) {
             int sec = 0;
+            if(tellStatistics)
+                clients.get(0).sendToAll(statistics);
             while (sec != 60) {
                 sec++;
                 Thread.sleep(1000);
@@ -89,6 +93,7 @@ public class Server {
                 }
                 clientsVoted = 0;
                 sec = 0;
+                ready=0;
                 while (sec != 40) {
                     sec++;
                     Thread.sleep(1000);
@@ -104,17 +109,94 @@ public class Server {
                 }
                 votesReport.clear();
                 checkWhoseOut();
+                while (true) {
+                    if (!Server.startGame())
+                        break;
+                    System.out.print("");
+                }
                 for (ClientManager clientManager : clients) {
                     votes.put(clientManager, 0);
                 }
             }
             setPhase("Night");
+            setLectersHeal(null);
+            setMafiasShot(null);
+            setSnipersShot(null);
+            setDoctorsHeal(null);
+            setSilentMan(null);
+            tellStatistics=false;
+            nightDeaths.clear();
+            ready=0;
             if (phase.equalsIgnoreCase("Night")) {
-                for(int i=0;i<rolesList.size();i++)
-                {
-                    if((rolesList.get(i) instanceof GodFather))
+                for(int i=0;i<clients.size();i++)
+                    if(life.get(clients.get(i))!=0)
+                    {
+                        if(clientCharacters.get(clients.get(i)).equalsIgnoreCase("Citizen")||clientCharacters.get(clients.get(i)).equalsIgnoreCase("Mafia")||clientCharacters.get(clients.get(i)).equalsIgnoreCase("DieHard"))
+                            clients.get(i).sendForThisClient("Wait for Other Players");
+                        if(clientCharacters.get(clients.get(i)).equalsIgnoreCase("Sniper"))
+                        {
+                            clients.get(i).sendForThisClient("Choose A Target:");
+                            for(int j=0;j<clients.size();j++)
+                                if(life.get(clients.get(j))!=0)
+                                    clients.get(i).sendForThisClient(names.get(clients.get(j)));
+                        }
+                        if(clientCharacters.get(clients.get(i)).equalsIgnoreCase("Psychologist"))
+                        {
+                            clients.get(i).sendForThisClient("Choose A Target:");
+                            for(int j=0;j<clients.size();j++)
+                                if(life.get(clients.get(j))!=0)
+                                    clients.get(i).sendForThisClient(names.get(clients.get(j)));
+                        }
+                        if(clientCharacters.get(clients.get(i)).equalsIgnoreCase("Godfather"))
+                        {
+                            clients.get(i).sendForThisClient("Choose A Target:");
+                            for(int j=0;j<citizens.size();j++)
+                                if(life.get(citizens.get(j))!=0)
+                                    clients.get(i).sendForThisClient(names.get(citizens.get(j)));
+                        }
+                        if(clientCharacters.get(clients.get(i)).equalsIgnoreCase("Dr.Lecter"))
+                        {
+                            clients.get(i).sendForThisClient("Choose A Target:");
+                            for(int j=0;j<mafias.size();j++)
+                                if(life.get(mafias.get(j))!=0)
+                                    clients.get(i).sendForThisClient(names.get(mafias.get(j)));
+                        }
+                        if(clientCharacters.get(clients.get(i)).equalsIgnoreCase("Doctor"))
+                        {
+                            clients.get(i).sendForThisClient("Choose A Target:");
+                            for(int j=0;j<clients.size();j++)
+                                if(life.get(clients.get(j))!=0)
+                                    clients.get(i).sendForThisClient(names.get(clients.get(j)));
+                        }
+                        if(clientCharacters.get(clients.get(i)).equalsIgnoreCase("Detector"))
+                        {
+                            clients.get(i).sendForThisClient("Choose A Target:");
+                            for(int j=0;j<clients.size();j++)
+                                if(life.get(clients.get(j))!=0)
+                                    clients.get(i).sendForThisClient(names.get(clients.get(j)));
+                        }
+                    }
+                while (true) {
+                    if (!Server.startGame())
+                        break;
+                    System.out.print("");
                 }
+                nightDeaths();
+                statistics();
             }
+        }
+    }
+
+    private static void nightDeaths() {
+        if(!doctorsHeal.equals(mafiasShot))
+        {
+            nightDeaths.add(mafiasShot);
+            life.put(mafiasShot,life.get(mafiasShot)-1);
+        }
+        if(lectersHeal.equals(!snipersShot.equals(lectersHeal)))
+        {
+            nightDeaths.add(snipersShot);
+            life.put(snipersShot,life.get(snipersShot)-1);
         }
     }
 
@@ -173,26 +255,26 @@ public class Server {
         int n = random.nextInt(characters.size());
         String chara = characters.get(n);
         characters.remove(n);
-        if(chara.equalsIgnoreCase("Doctor"))
-            rolesList.add(new Doctor(chara,thread));
-        if(chara.equalsIgnoreCase("Dr.Lecter"))
-            rolesList.add(new DrLecter(chara,thread));
-        if(chara.equalsIgnoreCase("DieHard"))
-            rolesList.add(new DieHard(chara,thread));
-        if(chara.equalsIgnoreCase("Sniper"))
-            rolesList.add(new Sniper(chara,thread));
-        if(chara.equalsIgnoreCase("Citizen"))
-            rolesList.add(new SimpleCitizen(chara,thread));
-        if(chara.equalsIgnoreCase("Mafia"))
-            rolesList.add(new SimpleMafia(chara,thread));
-        if(chara.equalsIgnoreCase("GodFather"))
-            rolesList.add(new GodFather(chara,thread));
-        if(chara.equalsIgnoreCase("Detector"))
-            rolesList.add(new Detector(chara,thread));
-        if(chara.equalsIgnoreCase("Mayor"))
-            rolesList.add(new Mayor(chara,thread));
-        if(chara.equalsIgnoreCase("Psychologist"))
-            rolesList.add(new Psychologist(chara,thread));
+        if (chara.equalsIgnoreCase("Doctor"))
+            rolesList.add(new Doctor(chara, thread, names.get(thread)));
+        if (chara.equalsIgnoreCase("Dr.Lecter"))
+            rolesList.add(new DrLecter(chara, thread, names.get(thread)));
+        if (chara.equalsIgnoreCase("DieHard"))
+            rolesList.add(new DieHard(chara, thread, names.get(thread)));
+        if (chara.equalsIgnoreCase("Sniper"))
+            rolesList.add(new Sniper(chara, thread, names.get(thread)));
+        if (chara.equalsIgnoreCase("Citizen"))
+            rolesList.add(new SimpleCitizen(chara, thread, names.get(thread)));
+        if (chara.equalsIgnoreCase("Mafia"))
+            rolesList.add(new SimpleMafia(chara, thread, names.get(thread)));
+        if (chara.equalsIgnoreCase("GodFather"))
+            rolesList.add(new GodFather(chara, thread, names.get(thread)));
+        if (chara.equalsIgnoreCase("Detector"))
+            rolesList.add(new Detector(chara, thread, names.get(thread)));
+        if (chara.equalsIgnoreCase("Mayor"))
+            rolesList.add(new Mayor(chara, thread, names.get(thread)));
+        if (chara.equalsIgnoreCase("Psychologist"))
+            rolesList.add(new Psychologist(chara, thread, names.get(thread)));
         if (chara.equals("Dr.Lecter") || chara.equals("Mafia") || chara.equals("GodFather"))
             mafias.add(thread);
         else
@@ -264,8 +346,8 @@ public class Server {
         Server.setClientsVoted(clientsVoted + 1);
     }
 
-    public static void checkWhoseOut() throws IOException {
-        ClientManager manOut, samePlayer=clients.get(0);
+    public static ClientManager checkWhoseOut() throws IOException {
+        ClientManager manOut, samePlayer = clients.get(0);
         boolean itHasSame = false;
         manOut = clients.get(0);
         for (int i = 1; i < clients.size(); i++) {
@@ -279,33 +361,77 @@ public class Server {
         }
         if (itHasSame) {
             clients.get(0).sendToAll("No Ones Out Because " + names.get(manOut) + " & " + names.get(samePlayer) + " Have Same Number Of Votes.");
-            return;
+            return null;
         }
-        clients.get(0).sendToAll(names.get(manOut) + " Is Out Now.");
-        life.put(manOut, 0);
+
+        clients.get(0).sendToAll(names.get(manOut) + " Can Be out If Mayor Give Permission.");
+        return manOut;
     }
 
-    public static boolean validVote(String vote,String name)
-    {
-        if(vote.equalsIgnoreCase(name))
+    public static boolean validVote(String vote, String name) {
+        if (vote.equalsIgnoreCase(name))
             return false;
-        for (int i=0;i<clients.size();i++)
-            if(names.get(clients.get(i)).equalsIgnoreCase(vote) && life.get(clients.get(i))!=0)
+        for (int i = 0; i < clients.size(); i++)
+            if (names.get(clients.get(i)).equalsIgnoreCase(vote) && life.get(clients.get(i)) != 0)
                 return true;
         return false;
     }
-    public static void kill(ClientManager client)
-    {
-        life.put(client,0);
+
+    public static boolean validMafiaKill(String vote) {
+        for (int i = 0; i < mafias.size(); i++)
+            if (names.get(mafias.get(i)).equalsIgnoreCase(vote))
+                return false;
+        for (int i = 0; i < clients.size(); i++)
+            if (names.get(clients.get(i)).equalsIgnoreCase(vote) && life.get(clients.get(i)) != 0)
+                return true;
+        return false;
     }
-    public static String playerCharacter(ClientManager player)
-    {
+
+    public static void kill(ClientManager client) {
+        life.put(client, 0);
+    }
+    public static void killSniper(ClientManager player) {
+        life.put(player, 0);
+        nightDeaths.add(player);
+    }
+    public static void statistics() throws IOException {
+        int aliveMafia = 0, aliveCitizen = 0;
+        for (int i = 0; i < mafias.size(); i++)
+            if (life.get(mafias.get(i)) != 0)
+                aliveMafia++;
+        for (int i = 0; i < citizens.size(); i++)
+            if (life.get(citizens.get(i)) != 0)
+                aliveCitizen++;
+            statistics="We Have " + aliveCitizen + " Citizens & " + aliveMafia + " Mafias Alive.";
+            tellStatistics=true;
+    }
+
+    public static String playerCharacter(ClientManager player) {
         return clientCharacters.get(player);
     }
-    public static void setSilentMan(ClientManager SilentMan)
-    {
-        silentMan=SilentMan;
+
+    public static void setSilentMan(ClientManager SilentMan) {
+        silentMan = SilentMan;
     }
+
+    public static void checkForDetector(ClientManager detector, ClientManager player1) throws IOException {
+        if(citizens.contains(player1))
+        {
+            detector.sendForThisClient("He Is A Citizen.");
+            return;
+        }
+        for (int i=0;i<rolesList.size();i++)
+          if(rolesList.get(i) instanceof GodFather)
+              if(rolesList.get(i).name.equalsIgnoreCase(names.get(player1)))
+              {
+                  detector.sendForThisClient("He Is A Citizen.");
+                  return;
+              }
+        detector.sendForThisClient("He Is A Mafia.");
+              return;
+
+    }
+
     public static int getClientsVoted() {
         return clientsVoted;
     }
@@ -358,6 +484,13 @@ public class Server {
         return clients;
     }
 
+    public static ArrayList<Roles> getRolesList() {
+        return rolesList;
+    }
+
+    public static ClientManager getSilentMan() {
+        return silentMan;
+    }
     public static void setPhase(String phase) {
         Server.phase = phase;
     }
@@ -369,4 +502,27 @@ public class Server {
     public static void setClientsVoted(int clientsVoted) {
         Server.clientsVoted = clientsVoted;
     }
+
+    public static void setMafiasShot(ClientManager mafiasShot) {
+        Server.mafiasShot = mafiasShot;
+    }
+
+    public static void setDoctorsHeal(ClientManager doctorsHeal) {
+        Server.doctorsHeal = doctorsHeal;
+    }
+
+    public static void setSnipersShot(ClientManager snipersShot) {
+        Server.snipersShot = snipersShot;
+    }
+
+    public static void setLectersHeal(ClientManager lectersHeal) {
+        Server.lectersHeal = lectersHeal;
+    }
+
+    public static void setTellStatistics(boolean tellStatistics) {
+        Server.tellStatistics = tellStatistics;
+    }
+
+
+
 }

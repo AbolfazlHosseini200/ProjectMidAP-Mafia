@@ -1,7 +1,7 @@
 public class Doctor extends Citizens{
-    public Doctor(String character,ClientManager player)
+    public Doctor(String character,ClientManager player,String name)
     {
-        super(character,player);
+        super(character,player,name);
     }
     @Override
     public void action(ClientManager player) {
