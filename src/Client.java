@@ -68,6 +68,17 @@ public class Client {
                         endDate=new Date();
                     }
             }
+            if(character.equalsIgnoreCase("Mayor"))
+            {
+                startDate = new Date();
+                endDate = new Date();
+                String vote = "";
+                while (!vote.equalsIgnoreCase("done") &&((int) ((endDate.getTime() - startDate.getTime()) / 1000)) < 40) {
+                    vote = scanner.next();
+                    dataOutputStream.writeUTF(vote);
+                    endDate=new Date();
+                }
+            }
             if(life==0)
                 break;
             phase="Night";

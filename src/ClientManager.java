@@ -59,8 +59,11 @@ public class ClientManager extends Thread{
                 Date startDate = new Date();
                 Date endDate = new Date();
 
-                while ((int)((endDate.getTime() - startDate.getTime()) / 1000)<60 && !Server.getSilentMan().equals(this))
+                while ((int)((endDate.getTime() - startDate.getTime()) / 1000)<60 )
                 {
+                    if(Server.getSilentMan()!=null)
+                      if(!Server.getSilentMan().equals(this))
+                        break;
                  msg=dataInputStream.readUTF();
                  endDate=new Date();
                  sendToAll(this.name,msg);
