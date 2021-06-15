@@ -183,7 +183,17 @@ public class Server {
                 }
                 nightDeaths();
                 statistics();
+                for (int i=0;i<nightDeaths.size();i++)
+                clients.get(0).sendToAll(names.get(nightDeaths.get(i))+" Died Last Night.");
+                if(nightDeaths.size()==0)
+                    clients.get(0).sendToAll("N0 One Died Last Night");
             }
+            for(int i=0;i<clients.size();i++)
+            {
+                clients.get(i).dataOutputStream.flush();
+                clients.get(i).dataOutputStream.writeUTF(String.valueOf(life.get(clients.get(i))));
+            }
+            setPhase("Day");
         }
     }
 

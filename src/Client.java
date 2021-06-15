@@ -9,6 +9,7 @@ public class Client {
     static String character;
     static String phase="Day";
     public static void main(String[] args) throws IOException {
+        int life;
         Socket client=new Socket("localhost",8585);
         Socket clientReader=new Socket("localhost",8585);
         DataInputStream dataInputStream=new DataInputStream(client.getInputStream());
@@ -36,6 +37,10 @@ public class Client {
         dataOutputStream.writeUTF("ready");
         System.out.println("Waiting For Other Players...");
         character=dataInputStream.readUTF();
+        if(character.equalsIgnoreCase("DieHard"))
+            life=2;
+        else
+            life=1;
         System.out.println("Your Character Is "+character);
         Thread chat=new Chats(dataInputStream2);
         chat.start();
@@ -63,10 +68,124 @@ public class Client {
                         endDate=new Date();
                     }
             }
-            while (phase.equalsIgnoreCase("Night"))
+            if(life==0)
+                break;
+            phase="Night";
+            if (phase.equalsIgnoreCase("Night"))
             {
-                   System.out.println(" ");
+                   if(character.equalsIgnoreCase("GodFather")||character.equalsIgnoreCase("Dr.Lecter")||character.equalsIgnoreCase("Mafia"))
+                   {
+                       startDate = new Date();
+                       endDate = new Date();
+                       dataOutputStream.flush();
+                       while (((int)((endDate.getTime() - startDate.getTime()) / 1000))<30)
+                       {
+                           dataOutputStream.writeUTF(scanner.nextLine());
+                           endDate = new Date();
+                       }
+                       if(character.equalsIgnoreCase("GodFather"))
+                       {
+                           startDate = new Date();
+                           endDate = new Date();
+                           String vote = "";
+                           while (!vote.equalsIgnoreCase("done") &&((int) ((endDate.getTime() - startDate.getTime()) / 1000)) < 20) {
+                               vote = scanner.next();
+                               dataOutputStream.writeUTF(vote);
+                               endDate=new Date();
+                           }
+                       }
+                       if(character.equalsIgnoreCase("Dr.Lecter"))
+                       {
+                           startDate = new Date();
+                           endDate = new Date();
+                           String vote = "";
+                           while (!vote.equalsIgnoreCase("done") &&((int) ((endDate.getTime() - startDate.getTime()) / 1000)) < 20) {
+                               vote = scanner.next();
+                               dataOutputStream.writeUTF(vote);
+                               endDate=new Date();
+                           }
+                       }
+                   }
+                if(character.equalsIgnoreCase("Detector"))
+                {
+                    startDate = new Date();
+                    endDate = new Date();
+                    String vote = "";
+                    while (!vote.equalsIgnoreCase("done") &&((int) ((endDate.getTime() - startDate.getTime()) / 1000)) < 20) {
+                        vote = scanner.next();
+                        dataOutputStream.writeUTF(vote);
+                        endDate=new Date();
+                    }
+                }
+                if(character.equalsIgnoreCase("Sniper"))
+                {
+                    startDate = new Date();
+                    endDate = new Date();
+                    String vote = "";
+                    while (!vote.equalsIgnoreCase("done") &&((int) ((endDate.getTime() - startDate.getTime()) / 1000)) < 20) {
+                        vote = scanner.next();
+                        dataOutputStream.writeUTF(vote);
+                        endDate=new Date();
+                    }
+                }
+                if(character.equalsIgnoreCase("Doctor"))
+                {
+                    startDate = new Date();
+                    endDate = new Date();
+                    String vote = "";
+                    while (!vote.equalsIgnoreCase("done") &&((int) ((endDate.getTime() - startDate.getTime()) / 1000)) < 20) {
+                        vote = scanner.next();
+                        dataOutputStream.writeUTF(vote);
+                        endDate=new Date();
+                    }
+                }
+                if(character.equalsIgnoreCase("Mayor"))
+                {
+                    startDate = new Date();
+                    endDate = new Date();
+                    String vote = "";
+                    while (!vote.equalsIgnoreCase("done") &&((int) ((endDate.getTime() - startDate.getTime()) / 1000)) < 20) {
+                        vote = scanner.next();
+                        dataOutputStream.writeUTF(vote);
+                        endDate=new Date();
+                    }
+                }
+                if(character.equalsIgnoreCase("Psychologist"))
+                {
+                    startDate = new Date();
+                    endDate = new Date();
+                    String vote = "";
+                    while (!vote.equalsIgnoreCase("done") &&((int) ((endDate.getTime() - startDate.getTime()) / 1000)) < 20) {
+                        vote = scanner.next();
+                        dataOutputStream.writeUTF(vote);
+                        endDate=new Date();
+                    }
+                }
+                if(character.equalsIgnoreCase("DieHard"))
+                {
+                    startDate = new Date();
+                    endDate = new Date();
+                    String vote = "";
+                    while (!vote.equalsIgnoreCase("done") &&((int) ((endDate.getTime() - startDate.getTime()) / 1000)) < 20) {
+                        vote = scanner.next();
+                        dataOutputStream.writeUTF(vote);
+                        endDate=new Date();
+                    }
+                }
             }
+            life=Integer.parseInt(dataInputStream.readUTF());
+            if(life==0)
+                break;
         }
+        if(life==0)
+        while (true)
+        {
+            dataOutputStream.flush();
+            String t=scanner.next();
+            dataOutputStream.writeUTF(t);
+            if(t.equalsIgnoreCase("exit")||t.equalsIgnoreCase("watch"))
+                break;
+        }
+
     }
 }
