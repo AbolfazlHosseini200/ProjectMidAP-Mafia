@@ -137,22 +137,6 @@ public class Server {
             return true;
     }
 
-//    public static boolean everyOneVoted() {
-//        int deadMafias = 0, deadCitizens = 0;
-//        for (int i = 0; i < mafias.size(); i++) {
-//            if (life.get(mafias.get(i)) == 0)
-//                deadMafias++;
-//        }
-//        for (int i = 0; i < citizens.size(); i++) {
-//            if (life.get(citizens.get(0)) == 0)
-//                deadCitizens++;
-//        }
-//        int alive = playersNumber - deadCitizens - deadMafias;
-//        if (alive == votes)
-//            return true;
-//        else
-//            return false;
-//    }
 
     public static void vote(ClientManager client) {
 
